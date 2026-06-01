@@ -291,12 +291,22 @@ async function sendCampaign() {
     } else { fail++; }
   }
 
-  DB.set('history', history);
-  DB.set('companies', companies);
-
   const campaigns = DB.get('campaigns');
   campaigns.push({ id: campaignId, name: cname, templateId: tid, total: checked.length, sent: ok, failed: fail, createdAt: Date.now() });
-  DB.set('campaigns', campaigns);
+
+  // 로컬 저장
+  DB.setLocal('history', history);
+  DB.setLocal('companies', companies);
+  DB.setLocal('campaigns', campaigns);
+
+  // 동기화가 켜져 있으면 서버 저장이 끝난 뒤 이동 (경쟁 조건 방지)
+  if (SYNC.enabled()) {
+    try {
+      await SYNC.push('history', history);
+      await SYNC.push('companies', companies);
+      await SYNC.push('campaigns', campaigns);
+    } catch {}
+  }
 
   btn.disabled = false;
   btn.textContent = '🚀 이메일 일괄 발송';

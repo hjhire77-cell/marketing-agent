@@ -331,18 +331,40 @@ function exportCSV() {
   toast('CSV 내보내기 완료');
 }
 
+// 따옴표·콤마·줄바꿈을 올바르게 처리하는 CSV 파서
+function parseCSV(text) {
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  text = text.replace(/^﻿/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; }
+        else inQuotes = false;
+      } else field += ch;
+    } else {
+      if (ch === '"') inQuotes = true;
+      else if (ch === ',') { row.push(field); field = ''; }
+      else if (ch === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+      else field += ch;
+    }
+  }
+  if (field !== '' || row.length) { row.push(field); rows.push(row); }
+  return rows;
+}
+
 function importCSV(event) {
   const file = event.target.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = e => {
-    const lines = e.target.result.replace(/^﻿/, '').split('\n').filter(l => l.trim());
-    const [, ...rows] = lines;
+    const rows = parseCSV(e.target.result).filter(r => r.some(c => c.trim()));
+    const [, ...dataRows] = rows; // 첫 줄(헤더) 제외
     const companies = DB.get('companies');
     let count = 0;
-    rows.forEach(row => {
-      const cols = row.split(',').map(v => v.replace(/^"|"$/g,'').replace(/""/g,'"'));
-      if (!cols[0] || !cols[4]) return;
+    dataRows.forEach(cols => {
+      if (!cols[0] || !cols[4]) return; // 회사명·이메일 필수
       companies.push({ id: DB.id(), name: cols[0], country: cols[1]||'US', industry: cols[2]||'', contact: cols[3]||'', email: cols[4], phone: cols[5]||'', website: cols[6]||'', status: cols[7]||'lead', note: cols[8]||'', createdAt: Date.now() });
       count++;
     });
