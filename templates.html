@@ -265,11 +265,59 @@ Warm regards,
 {{sender}}
 Global Sales | {{date}}`
     },
+    {
+      name: '수처리용 소포제 - 첫 컨택 (영문)',
+      subject: 'High-Performance Defoamer for Water Treatment - Partnership with {{company}}',
+      body: `Dear {{contact}},
+
+I hope this email finds you well.
+
+My name is {{sender}}, representing a Korean specialty chemical manufacturer with extensive experience in antifoam and defoamer solutions for water and wastewater treatment.
+
+We supply high-performance silicone and non-silicone based defoamers optimized for:
+- Municipal & industrial wastewater treatment
+- Pulp & paper processing
+- Textile dyeing and finishing
+- Power plant and cooling water systems
+
+Our products deliver fast knockdown, long-lasting foam control, and excellent stability even under high-shear and high-temperature conditions. We are confident our solutions can add value to {{company}}'s operations in {{country}}.
+
+We would be glad to share technical data sheets and arrange free samples for your evaluation.
+
+Could we schedule a brief call at your convenience?
+
+Best regards,
+{{sender}}
+Global Sales Manager`
+    },
+    {
+      name: '수처리용 소포제 - 샘플 제안 (영문)',
+      subject: 'Free Defoamer Samples for {{company}} - Technical Evaluation',
+      body: `Dear {{contact}},
+
+Thank you for your interest in our water treatment defoamer solutions.
+
+As a next step, we would like to offer complimentary samples for your technical team to evaluate performance firsthand - with no obligation.
+
+To recommend the most suitable grade, could you share:
+- Application (wastewater / pulp & paper / textile / cooling water, etc.)
+- Operating conditions (temperature, pH, foam severity)
+- Current product in use (if any)
+- Required quantity & shipping address in {{country}}
+
+Our defoamers are available in silicone emulsion, polymeric, and mineral-oil based types to match your specific process.
+
+We look forward to supporting {{company}} with reliable foam control and competitive pricing.
+
+Warm regards,
+{{sender}}
+{{date}}`
+    },
   ];
   const templates = DB.get('templates');
   defaults.forEach(d => templates.push({ id: DB.id(), ...d, createdAt: Date.now() }));
   DB.set('templates', templates);
-  toast('기본 템플릿 3개 추가됨');
+  toast(`기본 템플릿 ${defaults.length}개 추가됨`);
   renderTemplates();
 }
 
