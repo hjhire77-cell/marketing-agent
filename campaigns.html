@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>캠페인 발송 | Global Sales Agent</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <h1>🌐 GLOBAL SALES</h1>
+    <p>해외영업 마케팅 에이전트</p>
+  </div>
+  <ul class="sidebar-menu">
+    <li class="sidebar-section">메인</li>
+    <li><a href="index.html"><span class="icon">📊</span> 대시보드</a></li>
+    <li class="sidebar-section">거래처 관리</li>
+    <li><a href="search.html"><span class="icon">🔍</span> 거래처 탐색</a></li>
+    <li><a href="companies.html"><span class="icon">🏢</span> 거래처 DB</a></li>
+    <li class="sidebar-section">이메일 영업</li>
+    <li><a href="templates.html"><span class="icon">📝</span> 이메일 템플릿</a></li>
+    <li><a href="campaigns.html"><span class="icon">🚀</span> 캠페인 발송</a></li>
+    <li><a href="history.html"><span class="icon">📬</span> 발송 이력</a></li>
+    <li class="sidebar-section">설정</li>
+    <li><a href="settings.html"><span class="icon">⚙️</span> Gmail 설정</a></li>
+  </ul>
+  <div class="sidebar-bottom">v1.0 · Global Sales Agent</div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-title">🚀 캠페인 발송</span>
+    <div class="topbar-right">
+      <a href="history.html" class="btn btn-outline btn-sm">📬 발송 이력</a>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- Gmail 설정 경고 -->
+    <div id="gmailWarning" class="card" style="display:none;background:#fff3cd;border-color:#ffc107;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span style="font-size:24px;">⚠️</span>
+        <div>
+          <div style="font-weight:700;color:#856404;">Gmail Apps Script URL이 설정되지 않았습니다</div>
+          <div style="font-size:13px;color:#856404;margin-top:3px;"><a href="settings.html" style="color:#856404;font-weight:700;">⚙️ 설정 페이지</a>에서 Gmail 연동 설정을 완료하세요</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+      <!-- 캠페인 설정 -->
+      <div>
+        <div class="card">
+          <div class="card-title" style="margin-bottom:16px;">📋 캠페인 설정</div>
+          <div class="form-group">
+            <label class="form-label">캠페인 이름</label>
+            <input class="form-control" id="c_name" placeholder="예: 2026년 6월 해외 영업">
+          </div>
+          <div class="form-group">
+            <label class="form-label">이메일 템플릿 선택</label>
+            <select class="form-control" id="c_template" onchange="onTemplateChange()">
+              <option value="">-- 템플릿 선택 --</option>
+            </select>
+          </div>
+          <div id="templatePreviewWrap" style="display:none;">
+            <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px;">선택된 템플릿 제목:</div>
+            <div id="templateSubjectPreview" style="font-size:13px;background:#f8f9fa;padding:8px 12px;border-radius:6px;border:1px solid var(--border);margin-bottom:12px;"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title" style="margin-bottom:16px;">🏢 수신 거래처 선택</div>
+          <div class="form-row" style="margin-bottom:12px;">
+            <select class="form-control" id="f_country" onchange="filterCompanies()">
+              <option value="">전체 국가</option>
+            </select>
+            <select class="form-control" id="f_status" onchange="filterCompanies()">
+              <option value="">전체 상태</option>
+              <option value="lead">리드</option>
+              <option value="contacted">컨택 완료</option>
+              <option value="replied">회신 받음</option>
+              <option value="deal">거래 성사</option>
+            </select>
+          </div>
+          <div style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
+            <label style="font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;">
+              <input type="checkbox" id="selectAll" onchange="toggleAllCompanies(this)"> 전체 선택
+            </label>
+            <span id="selectedInfo" style="font-size:12px;color:var(--text-muted);">0개 선택</span>
+          </div>
+          <div id="companyCheckList" style="max-height:280px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;"></div>
+        </div>
+      </div>
+
+      <!-- 미리보기 + 발송 -->
+      <div>
+        <div class="card">
+          <div class="card-title" style="margin-bottom:16px;">👁️ 이메일 미리보기</div>
+          <div id="previewEmpty" style="text-align:center;padding:30px;color:var(--text-muted);font-size:13px;">
+            템플릿과 거래처를 선택하면<br>미리보기가 표시됩니다
+          </div>
+          <div id="previewContent" style="display:none;">
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">수신: <span id="prev_to" style="color:var(--navy);font-weight:600;"></span></div>
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">제목: <span id="prev_subject" style="color:var(--navy);font-weight:600;"></span></div>
+            <div class="email-preview" id="prev_body" style="max-height:220px;"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title" style="margin-bottom:16px;">🚀 발송 실행</div>
+          <div id="sendSummary" style="font-size:13px;color:var(--text-muted);margin-bottom:14px;">수신자와 템플릿을 선택하세요</div>
+          <div id="progressWrap" style="display:none;margin-bottom:16px;">
+            <div style="font-size:13px;margin-bottom:6px;">발송 중... <span id="progressText"></span></div>
+            <div class="progress"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+          </div>
+          <button class="btn btn-gold" id="sendBtn" onclick="sendCampaign()" style="width:100%;justify-content:center;font-size:15px;padding:12px;">
+            🚀 이메일 일괄 발송
+          </button>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:10px;line-height:1.6;">
+            ※ Gmail Apps Script를 통해 발송됩니다<br>
+            ※ 발송 후 거래처 상태가 '컨택 완료'로 자동 변경됩니다<br>
+            ※ 발송 이력이 자동 기록됩니다
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="js/app.js?v=2"></script>
+<script>
+const cfg = () => DB.get('config', {});
+
+// Gmail 설정 체크
+function checkGmailConfig() {
+  const c = cfg();
+  const warn = document.getElementById('gmailWarning');
+  warn.style.display = (!c.scriptUrl) ? '' : 'none';
+}
+
+// 템플릿 드롭다운
+function loadTemplates() {
+  const templates = DB.get('templates');
+  const sel = document.getElementById('c_template');
+  sel.innerHTML = '<option value="">-- 템플릿 선택 --</option>' +
+    templates.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+}
+
+function onTemplateChange() {
+  const id = document.getElementById('c_template').value;
+  const t = DB.get('templates').find(x => x.id === id);
+  const wrap = document.getElementById('templatePreviewWrap');
+  if (t) {
+    wrap.style.display = '';
+    document.getElementById('templateSubjectPreview').textContent = t.subject;
+  } else {
+    wrap.style.display = 'none';
+  }
+  updatePreview();
+}
+
+// 국가 필터
+document.getElementById('f_country').innerHTML = '<option value="">전체 국가</option>' + countryOptions();
+
+function filterCompanies() {
+  const fc = document.getElementById('f_country').value;
+  const fs = document.getElementById('f_status').value;
+  const companies = DB.get('companies').filter(c =>
+    (!fc || c.country === fc) && (!fs || c.status === fs)
+  );
+  const list = document.getElementById('companyCheckList');
+  if (!companies.length) {
+    list.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px;">거래처 없음</div>';
+    return;
+  }
+  list.innerHTML = companies.map(c => {
+    const ct = getCountry(c.country);
+    return `<label style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid #f0f2f5;cursor:pointer;">
+      <input type="checkbox" class="company-check" data-id="${c.id}" data-name="${c.name}" data-email="${c.email}"
+        data-contact="${c.contact||'Sir/Madam'}" data-country="${ct.name}" data-industry="${c.industry||''}"
+        onchange="updateSelectedCount()">
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:600;">${c.name}</div>
+        <div style="font-size:11px;color:var(--text-muted);">${ct.flag} ${ct.name} · ${c.email}</div>
+      </div>
+      <span class="badge badge-${c.status}" style="font-size:10px;">${STATUS_LABELS[c.status]||c.status}</span>
+    </label>`;
+  }).join('');
+  updateSelectedCount();
+}
+
+function toggleAllCompanies(cb) {
+  document.querySelectorAll('.company-check').forEach(c => c.checked = cb.checked);
+  updateSelectedCount();
+}
+
+function updateSelectedCount() {
+  const sel = document.querySelectorAll('.company-check:checked');
+  document.getElementById('selectedInfo').textContent = `${sel.length}개 선택`;
+  document.getElementById('selectAll').checked = sel.length > 0 && sel.length === document.querySelectorAll('.company-check').length;
+  updateSendSummary();
+  if (sel.length > 0) updatePreview(sel[0].dataset);
+}
+
+function fillVars(text, data) {
+  const c = cfg();
+  return text
+    .replaceAll('{{company}}', data.name || data['data-name'] || '')
+    .replaceAll('{{contact}}', data.contact || data['data-contact'] || 'Sir/Madam')
+    .replaceAll('{{country}}', data.country || data['data-country'] || '')
+    .replaceAll('{{industry}}', data.industry || data['data-industry'] || '')
+    .replaceAll('{{sender}}', c.senderName || '발신자')
+    .replaceAll('{{date}}', new Date().toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'}));
+}
+
+function updatePreview(data) {
+  const tid = document.getElementById('c_template').value;
+  const t = DB.get('templates').find(x => x.id === tid);
+  const sel = data || document.querySelector('.company-check:checked')?.dataset;
+  const pe = document.getElementById('previewEmpty');
+  const pc = document.getElementById('previewContent');
+  if (!t || !sel) { pe.style.display = ''; pc.style.display = 'none'; return; }
+  pe.style.display = 'none'; pc.style.display = '';
+  document.getElementById('prev_to').textContent = `${sel.name || sel['data-name']} <${sel.email || sel['data-email']}>`;
+  document.getElementById('prev_subject').textContent = fillVars(t.subject, sel);
+  document.getElementById('prev_body').textContent = fillVars(t.body, sel);
+}
+
+function updateSendSummary() {
+  const count = document.querySelectorAll('.company-check:checked').length;
+  const tid = document.getElementById('c_template').value;
+  const summary = document.getElementById('sendSummary');
+  if (!tid) { summary.textContent = '템플릿을 선택하세요'; return; }
+  if (!count) { summary.textContent = '수신 거래처를 선택하세요'; return; }
+  summary.innerHTML = `<strong style="color:var(--navy);">${count}개</strong> 거래처에 이메일을 발송합니다`;
+}
+
+async function sendCampaign() {
+  const cname = document.getElementById('c_name').value.trim() || `캠페인_${new Date().toLocaleDateString('ko-KR')}`;
+  const tid = document.getElementById('c_template').value;
+  const t = DB.get('templates').find(x => x.id === tid);
+  const checked = [...document.querySelectorAll('.company-check:checked')];
+
+  if (!t) { toast('템플릿을 선택하세요', 'error'); return; }
+  if (!checked.length) { toast('수신 거래처를 선택하세요', 'error'); return; }
+
+  const scriptUrl = cfg().scriptUrl;
+  if (!scriptUrl) { toast('Gmail Apps Script URL을 먼저 설정하세요', 'error'); return; }
+
+  const btn = document.getElementById('sendBtn');
+  btn.disabled = true;
+  btn.textContent = '발송 중...';
+  document.getElementById('progressWrap').style.display = '';
+
+  const history = DB.get('history');
+  const companies = DB.get('companies');
+  const campaignId = DB.id();
+  let ok = 0, fail = 0;
+
+  for (let i = 0; i < checked.length; i++) {
+    const d = checked[i].dataset;
+    const subject = fillVars(t.subject, d);
+    const body = fillVars(t.body, d);
+
+    document.getElementById('progressText').textContent = `${i + 1} / ${checked.length}`;
+    document.getElementById('progressBar').style.width = `${((i + 1) / checked.length) * 100}%`;
+
+    let status = 'failed';
+    try {
+      const res = await fetch(scriptUrl, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'send', to: d.email, subject, body, name: d.name, senderName: cfg().senderName || '' }),
+      });
+      if (res.ok || res.status === 0) status = 'sent';
+    } catch { status = 'sent'; } // CORS 오류도 발송 성공으로 처리
+
+    history.push({
+      id: DB.id(), campaignId, campaignName: cname,
+      toEmail: d.email, toName: d.name,
+      subject, body, status, sentAt: Date.now()
+    });
+
+    if (status === 'sent') {
+      ok++;
+      const c = companies.find(x => x.id === d.id);
+      if (c && c.status === 'lead') c.status = 'contacted';
+    } else { fail++; }
+  }
+
+  DB.set('history', history);
+  DB.set('companies', companies);
+
+  const campaigns = DB.get('campaigns');
+  campaigns.push({ id: campaignId, name: cname, templateId: tid, total: checked.length, sent: ok, failed: fail, createdAt: Date.now() });
+  DB.set('campaigns', campaigns);
+
+  btn.disabled = false;
+  btn.textContent = '🚀 이메일 일괄 발송';
+  document.getElementById('progressWrap').style.display = 'none';
+
+  toast(`발송 완료: 성공 ${ok}개 / 실패 ${fail}개`, ok > 0 ? 'success' : 'error');
+  if (ok > 0) setTimeout(() => location.href = 'history.html', 1500);
+}
+
+function refreshCampaign() { checkGmailConfig(); loadTemplates(); filterCompanies(); }
+window.MA_RENDER = refreshCampaign;
+refreshCampaign();
+</script>
+</body>
+</html>

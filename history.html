@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>발송 이력 | Global Sales Agent</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <h1>🌐 GLOBAL SALES</h1>
+    <p>해외영업 마케팅 에이전트</p>
+  </div>
+  <ul class="sidebar-menu">
+    <li class="sidebar-section">메인</li>
+    <li><a href="index.html"><span class="icon">📊</span> 대시보드</a></li>
+    <li class="sidebar-section">거래처 관리</li>
+    <li><a href="search.html"><span class="icon">🔍</span> 거래처 탐색</a></li>
+    <li><a href="companies.html"><span class="icon">🏢</span> 거래처 DB</a></li>
+    <li class="sidebar-section">이메일 영업</li>
+    <li><a href="templates.html"><span class="icon">📝</span> 이메일 템플릿</a></li>
+    <li><a href="campaigns.html"><span class="icon">🚀</span> 캠페인 발송</a></li>
+    <li><a href="history.html"><span class="icon">📬</span> 발송 이력</a></li>
+    <li class="sidebar-section">설정</li>
+    <li><a href="settings.html"><span class="icon">⚙️</span> Gmail 설정</a></li>
+  </ul>
+  <div class="sidebar-bottom">v1.0 · Global Sales Agent</div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-title">📬 발송 이력</span>
+    <div class="topbar-right">
+      <button class="btn btn-outline btn-sm" onclick="exportCSV()">📥 CSV 내보내기</button>
+      <button class="btn btn-danger btn-sm" onclick="clearAll()">🗑️ 전체 삭제</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- 캠페인별 요약 -->
+    <div class="card">
+      <div class="card-title" style="margin-bottom:14px;">📊 캠페인별 요약</div>
+      <div id="campaignSummary"></div>
+    </div>
+
+    <!-- 이력 테이블 -->
+    <div class="card">
+      <div class="card-header" style="margin-bottom:14px;">
+        <span class="card-title">📋 전체 발송 이력</span>
+        <div style="display:flex;gap:8px;">
+          <input class="form-control" id="searchInput" placeholder="이메일/제목 검색..." oninput="renderTable()" style="max-width:200px;">
+          <select class="form-control" id="filterStatus" onchange="renderTable()" style="max-width:140px;">
+            <option value="">전체 상태</option>
+            <option value="sent">발송 완료</option>
+            <option value="failed">실패</option>
+          </select>
+          <select class="form-control" id="filterCampaign" onchange="renderTable()" style="max-width:180px;">
+            <option value="">전체 캠페인</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>발송일시</th>
+              <th>캠페인</th>
+              <th>수신자</th>
+              <th>이메일</th>
+              <th>제목</th>
+              <th>상태</th>
+              <th>내용 보기</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+      <div id="emptyState" style="display:none;">
+        <div class="empty-state"><div class="icon">📬</div><h3>발송 이력 없음</h3><p><a href="campaigns.html">캠페인 발송</a>을 시작하세요</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 이메일 내용 보기 모달 -->
+<div class="modal-backdrop" id="viewModal">
+  <div class="modal" style="width:640px;">
+    <div class="modal-header">
+      <span class="modal-title">📧 이메일 내용</span>
+      <button class="modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:10px;">
+        <div style="font-size:12px;color:var(--text-muted);">수신: <span id="v_to" style="color:var(--navy);font-weight:600;"></span></div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">제목: <span id="v_subject" style="color:var(--navy);font-weight:600;"></span></div>
+      </div>
+      <div class="email-preview" id="v_body" style="max-height:360px;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('viewModal')">닫기</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js?v=2"></script>
+<script>
+function loadCampaignFilter() {
+  const campaigns = DB.get('campaigns');
+  const sel = document.getElementById('filterCampaign');
+  sel.innerHTML = '<option value="">전체 캠페인</option>' +
+    campaigns.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+}
+
+function renderCampaignSummary() {
+  const campaigns = DB.get('campaigns');
+  const el = document.getElementById('campaignSummary');
+  if (!campaigns.length) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">캠페인 없음</div>';
+    return;
+  }
+  el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;">
+    ${[...campaigns].sort((a,b)=>b.createdAt-a.createdAt).map(c => {
+      const rate = c.total ? Math.round(c.sent/c.total*100) : 0;
+      return `<div style="border:1px solid var(--border);border-radius:8px;padding:14px;">
+        <div style="font-weight:700;font-size:13px;color:var(--navy);margin-bottom:6px;">${c.name}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">${new Date(c.createdAt).toLocaleDateString('ko-KR')}</div>
+        <div style="display:flex;gap:10px;font-size:13px;margin-bottom:8px;">
+          <span>전체 <strong>${c.total}</strong></span>
+          <span style="color:var(--success);">성공 <strong>${c.sent}</strong></span>
+          <span style="color:var(--danger);">실패 <strong>${c.failed}</strong></span>
+        </div>
+        <div class="progress"><div class="progress-bar" style="width:${rate}%;"></div></div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">발송 성공률 ${rate}%</div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+function renderTable() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const fs = document.getElementById('filterStatus').value;
+  const fc = document.getElementById('filterCampaign').value;
+  const history = DB.get('history').filter(h =>
+    (!q || h.toEmail.toLowerCase().includes(q) || h.subject.toLowerCase().includes(q) || (h.toName||'').toLowerCase().includes(q)) &&
+    (!fs || h.status === fs) &&
+    (!fc || h.campaignId === fc)
+  ).sort((a,b) => b.sentAt - a.sentAt);
+
+  const tbody = document.getElementById('tableBody');
+  const empty = document.getElementById('emptyState');
+  empty.style.display = history.length ? 'none' : '';
+
+  tbody.innerHTML = history.map(h => {
+    const dt = new Date(h.sentAt).toLocaleString('ko-KR');
+    return `<tr>
+      <td style="font-size:12px;color:var(--text-muted);white-space:nowrap;">${dt}</td>
+      <td style="font-size:12px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${h.campaignName||'-'}</td>
+      <td style="font-size:12px;font-weight:600;">${h.toName||'-'}</td>
+      <td style="font-size:12px;"><a href="mailto:${h.toEmail}" style="color:var(--info);">${h.toEmail}</a></td>
+      <td style="font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${h.subject}">${h.subject}</td>
+      <td><span class="badge badge-${h.status}">${h.status==='sent'?'발송 완료':'실패'}</span></td>
+      <td><button class="btn btn-outline btn-xs" onclick="viewEmail('${h.id}')">보기</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function viewEmail(id) {
+  const h = DB.get('history').find(x => x.id === id);
+  if (!h) return;
+  document.getElementById('v_to').textContent = `${h.toName||''} <${h.toEmail}>`;
+  document.getElementById('v_subject').textContent = h.subject;
+  document.getElementById('v_body').textContent = h.body;
+  openModal('viewModal');
+}
+
+function exportCSV() {
+  const history = DB.get('history');
+  if (!history.length) { toast('내보낼 데이터 없음', 'error'); return; }
+  const header = '발송일시,캠페인,수신자,이메일,제목,상태';
+  const rows = history.map(h => [
+    new Date(h.sentAt).toLocaleString('ko-KR'),
+    h.campaignName||'', h.toName||'', h.toEmail, h.subject,
+    h.status==='sent'?'발송 완료':'실패'
+  ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(','));
+  const csv = '﻿' + [header, ...rows].join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+  a.download = `발송이력_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  toast('CSV 내보내기 완료');
+}
+
+function clearAll() {
+  if (!confirm('발송 이력을 모두 삭제하시겠습니까?')) return;
+  DB.set('history', []);
+  DB.set('campaigns', []);
+  toast('전체 삭제됨');
+  renderCampaignSummary();
+  renderTable();
+  loadCampaignFilter();
+}
+
+function renderAll() { loadCampaignFilter(); renderCampaignSummary(); renderTable(); }
+window.MA_RENDER = renderAll;
+renderAll();
+</script>
+</body>
+</html>

@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>거래처 DB | Global Sales Agent</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <h1>🌐 GLOBAL SALES</h1>
+    <p>해외영업 마케팅 에이전트</p>
+  </div>
+  <ul class="sidebar-menu">
+    <li class="sidebar-section">메인</li>
+    <li><a href="index.html"><span class="icon">📊</span> 대시보드</a></li>
+    <li class="sidebar-section">거래처 관리</li>
+    <li><a href="search.html"><span class="icon">🔍</span> 거래처 탐색</a></li>
+    <li><a href="companies.html"><span class="icon">🏢</span> 거래처 DB</a></li>
+    <li class="sidebar-section">이메일 영업</li>
+    <li><a href="templates.html"><span class="icon">📝</span> 이메일 템플릿</a></li>
+    <li><a href="campaigns.html"><span class="icon">🚀</span> 캠페인 발송</a></li>
+    <li><a href="history.html"><span class="icon">📬</span> 발송 이력</a></li>
+    <li class="sidebar-section">설정</li>
+    <li><a href="settings.html"><span class="icon">⚙️</span> Gmail 설정</a></li>
+  </ul>
+  <div class="sidebar-bottom">v1.0 · Global Sales Agent</div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-title">🏢 거래처 DB</span>
+    <div class="topbar-right">
+      <button class="btn btn-outline btn-sm" onclick="exportCSV()">📥 CSV 내보내기</button>
+      <label class="btn btn-outline btn-sm" style="cursor:pointer;">📤 CSV 가져오기<input type="file" accept=".csv" style="display:none" onchange="importCSV(event)"></label>
+      <button class="btn btn-gold btn-sm" onclick="openAddModal()">+ 거래처 추가</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- 필터 / 검색 -->
+    <div class="card" style="padding:16px 20px;">
+      <div class="search-bar">
+        <input class="form-control" id="searchInput" placeholder="회사명 / 이메일 검색..." oninput="renderTable()" style="max-width:220px;">
+        <select class="form-control" id="filterCountry" onchange="renderTable()" style="max-width:180px;">
+          <option value="">전체 국가</option>
+        </select>
+        <select class="form-control" id="filterStatus" onchange="renderTable()" style="max-width:150px;">
+          <option value="">전체 상태</option>
+          <option value="lead">리드</option>
+          <option value="contacted">컨택 완료</option>
+          <option value="replied">회신 받음</option>
+          <option value="deal">거래 성사</option>
+          <option value="rejected">거절</option>
+        </select>
+        <span id="countBadge" style="font-size:13px;color:var(--text-muted);margin-left:4px;"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th><input type="checkbox" id="checkAll" onchange="toggleAll(this)"></th>
+              <th>회사명</th>
+              <th>국가</th>
+              <th>업종</th>
+              <th>담당자</th>
+              <th>이메일</th>
+              <th>상태</th>
+              <th>등록일</th>
+              <th>액션</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+      <div id="emptyState" style="display:none;">
+        <div class="empty-state"><div class="icon">🏢</div><h3>등록된 거래처 없음</h3><p><a href="search.html">거래처 탐색</a>으로 추가하거나 직접 등록하세요</p></div>
+      </div>
+      <!-- 선택 일괄 작업 -->
+      <div id="bulkBar" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;gap:10px;align-items:center;">
+        <span id="selectedCount" style="font-size:13px;color:var(--text-muted);"></span>
+        <select class="form-control" id="bulkStatus" style="max-width:160px;">
+          <option value="">상태 일괄 변경</option>
+          <option value="lead">리드</option>
+          <option value="contacted">컨택 완료</option>
+          <option value="replied">회신 받음</option>
+          <option value="deal">거래 성사</option>
+          <option value="rejected">거절</option>
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="applyBulkStatus()">적용</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteSelected()">선택 삭제</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 추가/편집 모달 -->
+<div class="modal-backdrop" id="companyModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">🏢 거래처 추가</span>
+      <button class="modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editId">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">회사명 *</label>
+          <input class="form-control" id="f_name" placeholder="Company Name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">국가 *</label>
+          <select class="form-control" id="f_country"></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">업종</label>
+          <input class="form-control" id="f_industry" placeholder="Chemical, Cosmetic...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">담당자</label>
+          <input class="form-control" id="f_contact" placeholder="Contact Person">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">이메일 *</label>
+          <input class="form-control" id="f_email" type="email" placeholder="email@company.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">전화</label>
+          <input class="form-control" id="f_phone" placeholder="+1 234 567 8900">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">웹사이트</label>
+          <input class="form-control" id="f_website" placeholder="https://...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">상태</label>
+          <select class="form-control" id="f_status">
+            <option value="lead">리드</option>
+            <option value="contacted">컨택 완료</option>
+            <option value="replied">회신 받음</option>
+            <option value="deal">거래 성사</option>
+            <option value="rejected">거절</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">메모</label>
+        <textarea class="form-control" id="f_note" rows="3" placeholder="특이사항, 탐색 경로 등"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('companyModal')">취소</button>
+      <button class="btn btn-gold" onclick="saveCompany()">저장</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js?v=2"></script>
+<script>
+document.getElementById('filterCountry').innerHTML = '<option value="">전체 국가</option>' + countryOptions();
+document.getElementById('f_country').innerHTML = countryOptions('US');
+
+function getFiltered() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const fc = document.getElementById('filterCountry').value;
+  const fs = document.getElementById('filterStatus').value;
+  return DB.get('companies').filter(c =>
+    (!q || c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q)) &&
+    (!fc || c.country === fc) &&
+    (!fs || c.status === fs)
+  ).sort((a, b) => b.createdAt - a.createdAt);
+}
+
+function renderTable() {
+  const list = getFiltered();
+  document.getElementById('countBadge').textContent = `총 ${list.length}개`;
+  const tbody = document.getElementById('tableBody');
+  document.getElementById('emptyState').style.display = list.length ? 'none' : '';
+
+  if (!list.length) { tbody.innerHTML = ''; return; }
+  tbody.innerHTML = list.map(c => {
+    const ct = getCountry(c.country);
+    const date = new Date(c.createdAt).toLocaleDateString('ko-KR');
+    return `<tr>
+      <td><input type="checkbox" class="row-check" data-id="${c.id}" onchange="updateBulkBar()"></td>
+      <td><strong>${c.name}</strong>${c.website ? `<br><a href="${c.website}" target="_blank" style="font-size:11px;color:var(--info);">${c.website}</a>` : ''}</td>
+      <td>${ct.flag} ${ct.name}</td>
+      <td style="font-size:12px;">${c.industry || '-'}</td>
+      <td style="font-size:12px;">${c.contact || '-'}</td>
+      <td style="font-size:12px;"><a href="mailto:${c.email}">${c.email}</a></td>
+      <td>
+        <select class="form-control" style="padding:3px 6px;font-size:11px;width:auto;" onchange="quickStatus('${c.id}', this.value)">
+          ${['lead','contacted','replied','deal','rejected'].map(s =>
+            `<option value="${s}" ${c.status===s?'selected':''}>${STATUS_LABELS[s]}</option>`
+          ).join('')}
+        </select>
+      </td>
+      <td style="font-size:12px;color:var(--text-muted);">${date}</td>
+      <td>
+        <button class="btn btn-outline btn-xs" onclick="editCompany('${c.id}')">편집</button>
+        <button class="btn btn-danger btn-xs" onclick="deleteCompany('${c.id}')">삭제</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function quickStatus(id, val) {
+  const companies = DB.get('companies');
+  const c = companies.find(x => x.id === id);
+  if (c) { c.status = val; DB.set('companies', companies); toast('상태 변경됨'); }
+}
+
+function toggleAll(cb) {
+  document.querySelectorAll('.row-check').forEach(c => c.checked = cb.checked);
+  updateBulkBar();
+}
+
+function updateBulkBar() {
+  const sel = document.querySelectorAll('.row-check:checked');
+  const bar = document.getElementById('bulkBar');
+  bar.style.display = sel.length ? 'flex' : 'none';
+  document.getElementById('selectedCount').textContent = `${sel.length}개 선택됨`;
+}
+
+function applyBulkStatus() {
+  const val = document.getElementById('bulkStatus').value;
+  if (!val) return;
+  const ids = [...document.querySelectorAll('.row-check:checked')].map(c => c.dataset.id);
+  const companies = DB.get('companies');
+  companies.forEach(c => { if (ids.includes(c.id)) c.status = val; });
+  DB.set('companies', companies);
+  toast(`${ids.length}개 상태 변경 완료`);
+  renderTable();
+}
+
+function deleteSelected() {
+  const ids = [...document.querySelectorAll('.row-check:checked')].map(c => c.dataset.id);
+  if (!confirm(`${ids.length}개 거래처를 삭제하시겠습니까?`)) return;
+  let companies = DB.get('companies').filter(c => !ids.includes(c.id));
+  DB.set('companies', companies);
+  toast(`${ids.length}개 삭제됨`);
+  renderTable();
+}
+
+function openAddModal() {
+  document.getElementById('modalTitle').textContent = '🏢 거래처 추가';
+  document.getElementById('editId').value = '';
+  ['f_name','f_industry','f_contact','f_email','f_phone','f_website','f_note'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f_country').value = 'US';
+  document.getElementById('f_status').value = 'lead';
+  openModal('companyModal');
+}
+
+function editCompany(id) {
+  const c = DB.get('companies').find(x => x.id === id);
+  if (!c) return;
+  document.getElementById('modalTitle').textContent = '🏢 거래처 편집';
+  document.getElementById('editId').value = id;
+  document.getElementById('f_name').value = c.name;
+  document.getElementById('f_country').value = c.country;
+  document.getElementById('f_industry').value = c.industry || '';
+  document.getElementById('f_contact').value = c.contact || '';
+  document.getElementById('f_email').value = c.email;
+  document.getElementById('f_phone').value = c.phone || '';
+  document.getElementById('f_website').value = c.website || '';
+  document.getElementById('f_status').value = c.status;
+  document.getElementById('f_note').value = c.note || '';
+  openModal('companyModal');
+}
+
+function saveCompany() {
+  const name = document.getElementById('f_name').value.trim();
+  const email = document.getElementById('f_email').value.trim();
+  if (!name || !email) { toast('회사명과 이메일은 필수', 'error'); return; }
+  const id = document.getElementById('editId').value;
+  const companies = DB.get('companies');
+  const data = {
+    name, email,
+    country: document.getElementById('f_country').value,
+    industry: document.getElementById('f_industry').value.trim(),
+    contact: document.getElementById('f_contact').value.trim(),
+    phone: document.getElementById('f_phone').value.trim(),
+    website: document.getElementById('f_website').value.trim(),
+    status: document.getElementById('f_status').value,
+    note: document.getElementById('f_note').value.trim(),
+  };
+  if (id) {
+    const i = companies.findIndex(c => c.id === id);
+    companies[i] = { ...companies[i], ...data };
+    toast('거래처 수정됨');
+  } else {
+    companies.push({ id: DB.id(), ...data, createdAt: Date.now() });
+    toast('거래처 추가됨');
+  }
+  DB.set('companies', companies);
+  closeModal('companyModal');
+  renderTable();
+}
+
+function deleteCompany(id) {
+  if (!confirm('이 거래처를 삭제하시겠습니까?')) return;
+  DB.set('companies', DB.get('companies').filter(c => c.id !== id));
+  toast('삭제됨');
+  renderTable();
+}
+
+function exportCSV() {
+  const companies = DB.get('companies');
+  if (!companies.length) { toast('내보낼 데이터 없음', 'error'); return; }
+  const header = '회사명,국가코드,업종,담당자,이메일,전화,웹사이트,상태,메모,등록일';
+  const rows = companies.map(c => [
+    c.name, c.country, c.industry||'', c.contact||'', c.email, c.phone||'', c.website||'', c.status, c.note||'',
+    new Date(c.createdAt).toLocaleDateString('ko-KR')
+  ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(','));
+  const csv = '﻿' + [header, ...rows].join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+  a.download = `거래처_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  toast('CSV 내보내기 완료');
+}
+
+function importCSV(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const lines = e.target.result.replace(/^﻿/, '').split('\n').filter(l => l.trim());
+    const [, ...rows] = lines;
+    const companies = DB.get('companies');
+    let count = 0;
+    rows.forEach(row => {
+      const cols = row.split(',').map(v => v.replace(/^"|"$/g,'').replace(/""/g,'"'));
+      if (!cols[0] || !cols[4]) return;
+      companies.push({ id: DB.id(), name: cols[0], country: cols[1]||'US', industry: cols[2]||'', contact: cols[3]||'', email: cols[4], phone: cols[5]||'', website: cols[6]||'', status: cols[7]||'lead', note: cols[8]||'', createdAt: Date.now() });
+      count++;
+    });
+    DB.set('companies', companies);
+    toast(`${count}개 거래처 가져오기 완료`);
+    renderTable();
+  };
+  reader.readAsText(file, 'UTF-8');
+  event.target.value = '';
+}
+
+window.MA_RENDER = renderTable;
+renderTable();
+</script>
+</body>
+</html>

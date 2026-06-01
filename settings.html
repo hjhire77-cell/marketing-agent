@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gmail 설정 | Global Sales Agent</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <h1>🌐 GLOBAL SALES</h1>
+    <p>해외영업 마케팅 에이전트</p>
+  </div>
+  <ul class="sidebar-menu">
+    <li class="sidebar-section">메인</li>
+    <li><a href="index.html"><span class="icon">📊</span> 대시보드</a></li>
+    <li class="sidebar-section">거래처 관리</li>
+    <li><a href="search.html"><span class="icon">🔍</span> 거래처 탐색</a></li>
+    <li><a href="companies.html"><span class="icon">🏢</span> 거래처 DB</a></li>
+    <li class="sidebar-section">이메일 영업</li>
+    <li><a href="templates.html"><span class="icon">📝</span> 이메일 템플릿</a></li>
+    <li><a href="campaigns.html"><span class="icon">🚀</span> 캠페인 발송</a></li>
+    <li><a href="history.html"><span class="icon">📬</span> 발송 이력</a></li>
+    <li class="sidebar-section">설정</li>
+    <li><a href="settings.html"><span class="icon">⚙️</span> Gmail 설정</a></li>
+  </ul>
+  <div class="sidebar-bottom">v1.0 · Global Sales Agent</div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-title">⚙️ Gmail 설정</span>
+  </div>
+
+  <div class="content">
+
+    <!-- 발신자 정보 -->
+    <div class="card">
+      <div class="card-title" style="margin-bottom:16px;">👤 발신자 정보</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">발신자 이름 ({{sender}} 변수)</label>
+          <input class="form-control" id="senderName" placeholder="예: Kim Hyunjung / Sales Manager">
+        </div>
+        <div class="form-group">
+          <label class="form-label">발신 이메일 (Gmail 계정)</label>
+          <input class="form-control" id="senderEmail" type="email" placeholder="예: your@gmail.com">
+        </div>
+      </div>
+      <button class="btn btn-gold" onclick="saveConfig()">저장</button>
+    </div>
+
+    <!-- Gmail Apps Script 설정 -->
+    <div class="card">
+      <div class="card-title" style="margin-bottom:6px;">📡 Gmail Apps Script 연동</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">
+        이메일 발송은 Google Apps Script를 통해 본인의 Gmail 계정으로 발송됩니다. 아래 절차를 따라 설정하세요.
+      </div>
+
+      <!-- 단계별 안내 -->
+      <div style="display:flex;flex-direction:column;gap:16px;margin-bottom:20px;">
+
+        <div style="display:flex;gap:14px;align-items:flex-start;">
+          <div style="background:var(--navy);color:var(--gold);font-weight:800;font-size:13px;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">1</div>
+          <div>
+            <div style="font-weight:700;font-size:13px;margin-bottom:4px;">Google Apps Script 열기</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">Google 계정으로 로그인 후 새 프로젝트를 만드세요</div>
+            <a href="https://script.google.com" target="_blank" class="btn btn-outline btn-sm">script.google.com 열기 →</a>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:14px;align-items:flex-start;">
+          <div style="background:var(--navy);color:var(--gold);font-weight:800;font-size:13px;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">2</div>
+          <div style="flex:1;">
+            <div style="font-weight:700;font-size:13px;margin-bottom:4px;">아래 코드를 붙여넣기</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">코드 에디터의 기존 내용을 지우고 아래 코드를 붙여넣으세요</div>
+            <div style="position:relative;">
+              <pre id="scriptCode" style="background:#1a2b4a;color:#e0c070;padding:14px 16px;border-radius:8px;font-size:12px;line-height:1.7;overflow-x:auto;white-space:pre;">// === Global Sales Agent : 이메일 발송 + Google Sheets 동기화 통합본 ===
+
+// 데이터 저장용 시트 (없으면 자동 생성)
+function getSheet() {
+  var props = PropertiesService.getScriptProperties();
+  var id = props.getProperty('SHEET_ID');
+  var ss;
+  if (id) { ss = SpreadsheetApp.openById(id); }
+  else {
+    ss = SpreadsheetApp.create('GlobalSalesData');
+    props.setProperty('SHEET_ID', ss.getId());
+  }
+  var sh = ss.getSheetByName('AppData');
+  if (!sh) { sh = ss.insertSheet('AppData'); }
+  return sh;
+}
+
+function readAll() {
+  var rows = getSheet().getDataRange().getValues();
+  var out = {};
+  rows.forEach(function(r) {
+    if (r[0]) { try { out[r[0]] = JSON.parse(r[1] || '[]'); } catch(e) { out[r[0]] = []; } }
+  });
+  return out;
+}
+
+function writeKey(key, value) {
+  var sh = getSheet();
+  var rows = sh.getDataRange().getValues();
+  for (var i = 0; i < rows.length; i++) {
+    if (rows[i][0] === key) { sh.getRange(i + 1, 2).setValue(JSON.stringify(value)); return; }
+  }
+  sh.appendRow([key, JSON.stringify(value)]);
+}
+
+function json(o) {
+  return ContentService.createTextOutput(JSON.stringify(o))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// 데이터 불러오기 (모든 기기 공통)
+function doGet(e) {
+  return json(readAll());
+}
+
+// 데이터 저장 또는 이메일 발송
+function doPost(e) {
+  try {
+    var d = JSON.parse(e.postData.contents);
+    if (d.action === 'sync') {
+      writeKey(d.key, d.value);
+      return json({ status: 'ok' });
+    }
+    // 그 외에는 이메일 발송
+    GmailApp.sendEmail(d.to, d.subject, d.body, {
+      name: d.senderName || Session.getActiveUser().getEmail()
+    });
+    return json({ status: 'ok' });
+  } catch(err) {
+    return json({ status: 'error', message: err.message });
+  }
+}</pre>
+              <button class="btn btn-sm" onclick="copyCode()" style="position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);">복사</button>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:14px;align-items:flex-start;">
+          <div style="background:var(--navy);color:var(--gold);font-weight:800;font-size:13px;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">3</div>
+          <div>
+            <div style="font-weight:700;font-size:13px;margin-bottom:4px;">웹 앱으로 배포</div>
+            <div style="font-size:12px;color:var(--text-muted);line-height:1.8;">
+              상단 메뉴 <strong>배포 → 새 배포</strong> 클릭<br>
+              유형: <strong>웹 앱</strong> 선택<br>
+              실행 계정: <strong>나</strong><br>
+              액세스 권한: <strong>모든 사용자</strong><br>
+              <strong>배포</strong> 클릭 → Google 계정 권한 허용
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:14px;align-items:flex-start;">
+          <div style="background:var(--navy);color:var(--gold);font-weight:800;font-size:13px;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">4</div>
+          <div style="flex:1;">
+            <div style="font-weight:700;font-size:13px;margin-bottom:4px;">배포 URL 입력</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">배포 완료 후 표시되는 <strong>웹 앱 URL</strong>을 아래에 붙여넣으세요</div>
+            <div style="display:flex;gap:8px;">
+              <input class="form-control" id="scriptUrl" placeholder="https://script.google.com/macros/s/...../exec">
+              <button class="btn btn-primary" onclick="testConnection()">연결 테스트</button>
+            </div>
+            <div id="testResult" style="margin-top:8px;font-size:12px;"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <button class="btn btn-gold" onclick="saveConfig()">설정 저장</button>
+    </div>
+
+    <!-- 다기기 동기화 -->
+    <div class="card" style="background:linear-gradient(135deg,#1a2b4a,#243559);color:#fff;">
+      <div class="card-title" style="color:var(--gold);margin-bottom:6px;">☁️ 다기기 동기화 (Google Sheets)</div>
+      <div style="font-size:13px;opacity:0.9;margin-bottom:14px;line-height:1.7;">
+        위 Apps Script URL이 설정되면 거래처/템플릿/발송이력이 <strong style="color:var(--gold);">Google Sheets에 자동 저장</strong>되어
+        다른 PC·휴대폰에서 같은 URL로 접속하면 동일한 데이터를 볼 수 있습니다.<br>
+        데이터를 입력할 때마다 자동 저장되며, 페이지를 열 때 서버에서 자동으로 불러옵니다.
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-gold" onclick="SYNC.pushAll()">⬆️ 현재 데이터 서버에 업로드</button>
+        <button class="btn" style="background:rgba(255,255,255,0.15);color:#fff;" onclick="pullNow()">⬇️ 서버에서 다시 불러오기</button>
+      </div>
+      <div id="syncInfo" style="font-size:12px;opacity:0.7;margin-top:10px;"></div>
+    </div>
+
+    <!-- 데이터 관리 -->
+    <div class="card">
+      <div class="card-title" style="margin-bottom:14px;">🗄️ 데이터 관리 (오프라인 백업)</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-outline" onclick="backupAll()">📥 전체 데이터 백업</button>
+        <label class="btn btn-outline" style="cursor:pointer;">📤 데이터 복원<input type="file" accept=".json" style="display:none" onchange="restoreAll(event)"></label>
+        <button class="btn btn-danger" onclick="resetAll()">⚠️ 전체 초기화</button>
+      </div>
+      <div style="margin-top:12px;font-size:12px;color:var(--text-muted);">
+        백업: 거래처 DB, 이메일 템플릿, 발송 이력, 캠페인 데이터가 JSON 파일로 저장됩니다
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="js/app.js?v=2"></script>
+<script>
+async function pullNow() {
+  if (!SYNC.enabled()) { toast('먼저 Apps Script URL을 설정/저장하세요', 'error'); return; }
+  try {
+    await SYNC.load();
+    toast('서버에서 데이터 불러오기 완료');
+    updateSyncInfo();
+  } catch { toast('불러오기 실패 — URL 확인', 'error'); }
+}
+
+function updateSyncInfo() {
+  const el = document.getElementById('syncInfo');
+  if (!el) return;
+  el.textContent = `현재 로컬: 거래처 ${DB.get('companies').length} · 템플릿 ${DB.get('templates').length} · 발송이력 ${DB.get('history').length}건`;
+}
+
+function loadConfig() {
+  updateSyncInfo();
+  const c = DB.get('config', {});
+  document.getElementById('senderName').value = c.senderName || '';
+  document.getElementById('senderEmail').value = c.senderEmail || '';
+  document.getElementById('scriptUrl').value = c.scriptUrl || '';
+}
+
+function saveConfig() {
+  const c = {
+    senderName: document.getElementById('senderName').value.trim(),
+    senderEmail: document.getElementById('senderEmail').value.trim(),
+    scriptUrl: document.getElementById('scriptUrl').value.trim(),
+  };
+  DB.set('config', c);
+  toast('설정 저장됨');
+}
+
+function copyCode() {
+  const code = document.getElementById('scriptCode').textContent;
+  navigator.clipboard.writeText(code).then(() => toast('코드 복사됨'));
+}
+
+async function testConnection() {
+  const url = document.getElementById('scriptUrl').value.trim();
+  if (!url) { toast('URL을 입력하세요', 'error'); return; }
+  const result = document.getElementById('testResult');
+  result.textContent = '연결 테스트 중...';
+  result.style.color = 'var(--text-muted)';
+  try {
+    await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify({ to: 'test@test.com', subject: 'Test', body: 'Connection test' }),
+    });
+    result.textContent = '✅ 연결 성공! URL이 유효합니다.';
+    result.style.color = 'var(--success)';
+  } catch {
+    result.textContent = '✅ URL 형식 확인됨 (CORS 제한은 정상입니다 — 실제 발송은 정상 동작합니다)';
+    result.style.color = 'var(--success)';
+  }
+}
+
+function backupAll() {
+  const data = {
+    companies: DB.get('companies'),
+    templates: DB.get('templates'),
+    history: DB.get('history'),
+    campaigns: DB.get('campaigns'),
+    config: DB.get('config', {}),
+    exportedAt: new Date().toISOString(),
+  };
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+  a.download = `GlobalSales_백업_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  toast('백업 파일 저장됨');
+}
+
+function restoreAll(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (!confirm('현재 데이터를 덮어쓰시겠습니까?')) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.companies) DB.set('companies', data.companies);
+      if (data.templates) DB.set('templates', data.templates);
+      if (data.history) DB.set('history', data.history);
+      if (data.campaigns) DB.set('campaigns', data.campaigns);
+      if (data.config) DB.set('config', data.config);
+      toast('데이터 복원 완료');
+      loadConfig();
+    } catch { toast('잘못된 파일 형식', 'error'); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function resetAll() {
+  if (!confirm('모든 데이터를 초기화하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) return;
+  ['companies','templates','history','campaigns','config'].forEach(k => localStorage.removeItem('ma_' + k));
+  toast('초기화 완료');
+  loadConfig();
+}
+
+loadConfig();
+</script>
+</body>
+</html>

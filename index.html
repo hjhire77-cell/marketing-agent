@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>해외영업 마케팅 에이전트</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <h1>🌐 GLOBAL SALES</h1>
+    <p>해외영업 마케팅 에이전트</p>
+  </div>
+  <ul class="sidebar-menu">
+    <li class="sidebar-section">메인</li>
+    <li><a href="index.html" class="active"><span class="icon">📊</span> 대시보드</a></li>
+    <li class="sidebar-section">거래처 관리</li>
+    <li><a href="search.html"><span class="icon">🔍</span> 거래처 탐색</a></li>
+    <li><a href="companies.html"><span class="icon">🏢</span> 거래처 DB</a></li>
+    <li class="sidebar-section">이메일 영업</li>
+    <li><a href="templates.html"><span class="icon">📝</span> 이메일 템플릿</a></li>
+    <li><a href="campaigns.html"><span class="icon">🚀</span> 캠페인 발송</a></li>
+    <li><a href="history.html"><span class="icon">📬</span> 발송 이력</a></li>
+    <li class="sidebar-section">설정</li>
+    <li><a href="settings.html"><span class="icon">⚙️</span> Gmail 설정</a></li>
+  </ul>
+  <div class="sidebar-bottom">v1.0 · Global Sales Agent</div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-title">📊 대시보드</span>
+    <div class="topbar-right">
+      <span id="todayDate" style="font-size:13px;color:#6c757d;"></span>
+      <a href="search.html" class="btn btn-gold btn-sm">+ 거래처 탐색</a>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- 통계 카드 -->
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+      <!-- 최근 거래처 -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">최근 등록 거래처</span>
+          <a href="companies.html" class="btn btn-outline btn-sm">전체 보기</a>
+        </div>
+        <div id="recentCompanies"></div>
+      </div>
+
+      <!-- 최근 발송 이력 -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">최근 이메일 발송</span>
+          <a href="history.html" class="btn btn-outline btn-sm">전체 보기</a>
+        </div>
+        <div id="recentHistory"></div>
+      </div>
+    </div>
+
+    <!-- 빠른 실행 -->
+    <div class="card" style="margin-top:20px;">
+      <div class="card-header">
+        <span class="card-title">빠른 실행</span>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <a href="search.html" class="btn btn-primary">🔍 거래처 탐색</a>
+        <a href="companies.html" class="btn btn-outline">🏢 거래처 추가</a>
+        <a href="templates.html" class="btn btn-outline">📝 템플릿 편집</a>
+        <a href="campaigns.html" class="btn btn-gold">🚀 캠페인 발송</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js?v=2"></script>
+<script>
+document.getElementById('todayDate').textContent = new Date().toLocaleDateString('ko-KR', {year:'numeric',month:'long',day:'numeric'});
+
+function renderDashboard() {
+  const companies = DB.get('companies');
+  const history = DB.get('history');
+  const templates = DB.get('templates');
+  const campaigns = DB.get('campaigns');
+
+  const sent = history.filter(h => h.status === 'sent').length;
+  const replied = companies.filter(c => c.status === 'replied').length;
+  const deals = companies.filter(c => c.status === 'deal').length;
+
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card">
+      <div class="icon-wrap">🏢</div>
+      <div class="label">등록 거래처</div>
+      <div class="value">${companies.length}</div>
+      <div class="sub">전체 거래처 DB</div>
+    </div>
+    <div class="stat-card">
+      <div class="icon-wrap">📬</div>
+      <div class="label">발송 이메일</div>
+      <div class="value">${sent}</div>
+      <div class="sub">총 발송 건수</div>
+    </div>
+    <div class="stat-card">
+      <div class="icon-wrap">💬</div>
+      <div class="label">회신 받음</div>
+      <div class="value">${replied}</div>
+      <div class="sub">응답한 거래처</div>
+    </div>
+    <div class="stat-card">
+      <div class="icon-wrap">🤝</div>
+      <div class="label">거래 성사</div>
+      <div class="value">${deals}</div>
+      <div class="sub">거래 완료</div>
+    </div>
+    <div class="stat-card">
+      <div class="icon-wrap">📝</div>
+      <div class="label">템플릿</div>
+      <div class="value">${templates.length}</div>
+      <div class="sub">이메일 템플릿 수</div>
+    </div>
+    <div class="stat-card">
+      <div class="icon-wrap">🚀</div>
+      <div class="label">캠페인</div>
+      <div class="value">${campaigns.length}</div>
+      <div class="sub">생성된 캠페인</div>
+    </div>
+  `;
+
+  // 최근 거래처
+  const recent = [...companies].sort((a,b) => b.createdAt - a.createdAt).slice(0, 5);
+  document.getElementById('recentCompanies').innerHTML = recent.length
+    ? `<table><thead><tr><th>회사명</th><th>국가</th><th>상태</th></tr></thead><tbody>
+        ${recent.map(c => {
+          const ct = getCountry(c.country);
+          return `<tr>
+            <td><a href="companies.html" style="color:var(--navy);font-weight:600;">${c.name}</a></td>
+            <td>${ct.flag} ${ct.name}</td>
+            <td><span class="badge badge-${c.status}">${STATUS_LABELS[c.status] || c.status}</span></td>
+          </tr>`;
+        }).join('')}
+      </tbody></table>`
+    : `<div class="empty-state"><div class="icon">🏢</div><h3>거래처 없음</h3><p><a href="search.html">거래처 탐색</a>으로 시작하세요</p></div>`;
+
+  // 최근 발송 이력
+  const recentH = [...history].sort((a,b) => b.sentAt - a.sentAt).slice(0, 5);
+  document.getElementById('recentHistory').innerHTML = recentH.length
+    ? `<table><thead><tr><th>수신자</th><th>제목</th><th>상태</th></tr></thead><tbody>
+        ${recentH.map(h => `<tr>
+          <td style="font-size:12px;">${h.toEmail}</td>
+          <td style="font-size:12px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${h.subject}</td>
+          <td><span class="badge badge-${h.status}">${h.status === 'sent' ? '발송 완료' : '실패'}</span></td>
+        </tr>`).join('')}
+      </tbody></table>`
+    : `<div class="empty-state"><div class="icon">📬</div><h3>발송 이력 없음</h3><p><a href="campaigns.html">캠페인 발송</a>으로 시작하세요</p></div>`;
+}
+
+window.MA_RENDER = renderDashboard;
+renderDashboard();
+</script>
+</body>
+</html>

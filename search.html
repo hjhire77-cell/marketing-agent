@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>거래처 탐색 | Global Sales Agent</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <h1>🌐 GLOBAL SALES</h1>
+    <p>해외영업 마케팅 에이전트</p>
+  </div>
+  <ul class="sidebar-menu">
+    <li class="sidebar-section">메인</li>
+    <li><a href="index.html"><span class="icon">📊</span> 대시보드</a></li>
+    <li class="sidebar-section">거래처 관리</li>
+    <li><a href="search.html"><span class="icon">🔍</span> 거래처 탐색</a></li>
+    <li><a href="companies.html"><span class="icon">🏢</span> 거래처 DB</a></li>
+    <li class="sidebar-section">이메일 영업</li>
+    <li><a href="templates.html"><span class="icon">📝</span> 이메일 템플릿</a></li>
+    <li><a href="campaigns.html"><span class="icon">🚀</span> 캠페인 발송</a></li>
+    <li><a href="history.html"><span class="icon">📬</span> 발송 이력</a></li>
+    <li class="sidebar-section">설정</li>
+    <li><a href="settings.html"><span class="icon">⚙️</span> Gmail 설정</a></li>
+  </ul>
+  <div class="sidebar-bottom">v1.0 · Global Sales Agent</div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-title">🔍 거래처 탐색</span>
+    <div class="topbar-right">
+      <button class="btn btn-outline btn-sm" onclick="openModal('addManualModal')">+ 직접 추가</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- 탐색 조건 -->
+    <div class="card">
+      <div class="card-title" style="margin-bottom:16px;">키워드 + 국가로 잠재 거래처 탐색</div>
+      <div class="form-row-3">
+        <div class="form-group">
+          <label class="form-label">제품/업종 키워드</label>
+          <input class="form-control" id="keyword" placeholder="예: silicone, cosmetic ingredient, chemical">
+        </div>
+        <div class="form-group">
+          <label class="form-label">타겟 국가</label>
+          <select class="form-control" id="country">
+            <option value="">전체 국가</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">검색 채널</label>
+          <select class="form-control" id="channel">
+            <option value="google">Google 검색</option>
+            <option value="linkedin">LinkedIn</option>
+            <option value="alibaba">Alibaba</option>
+            <option value="kompass">Kompass</option>
+            <option value="globalsources">Global Sources</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="doSearch()">🔍 검색 링크 열기</button>
+        <button class="btn btn-gold" onclick="generateQueries()">💡 검색어 자동 생성</button>
+      </div>
+    </div>
+
+    <!-- 생성된 검색어 -->
+    <div class="card" id="queriesCard" style="display:none;">
+      <div class="card-header">
+        <span class="card-title">💡 추천 검색어</span>
+        <span style="font-size:12px;color:var(--text-muted);">클릭하면 해당 채널에서 검색 창이 열립니다</span>
+      </div>
+      <div id="queriesList" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+    </div>
+
+    <!-- 수동 등록 안내 -->
+    <div class="card" style="background:linear-gradient(135deg,#1a2b4a,#243559);color:#fff;">
+      <div class="card-title" style="color:var(--gold);margin-bottom:10px;">📌 거래처 등록 방법</div>
+      <div style="font-size:13px;line-height:1.9;opacity:0.9;">
+        1. 위 검색 링크로 잠재 거래처를 찾습니다<br>
+        2. 관심 있는 회사의 정보(이름, 이메일, 국가 등)를 확인합니다<br>
+        3. <strong style="color:var(--gold);">+ 직접 추가</strong> 버튼으로 거래처 DB에 등록합니다<br>
+        4. <strong style="color:var(--gold);">캠페인 발송</strong>에서 이메일을 일괄 발송합니다
+      </div>
+    </div>
+
+    <!-- 등록된 거래처 미리보기 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">최근 등록 거래처</span>
+        <a href="companies.html" class="btn btn-outline btn-sm">거래처 DB 전체 보기 →</a>
+      </div>
+      <div id="previewList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 직접 추가 모달 -->
+<div class="modal-backdrop" id="addManualModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">🏢 거래처 직접 추가</span>
+      <button class="modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">회사명 *</label>
+          <input class="form-control" id="m_name" placeholder="Company Name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">국가 *</label>
+          <select class="form-control" id="m_country"></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">업종</label>
+          <input class="form-control" id="m_industry" placeholder="예: Chemical, Cosmetic">
+        </div>
+        <div class="form-group">
+          <label class="form-label">담당자명</label>
+          <input class="form-control" id="m_contact" placeholder="Contact Person">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">이메일 *</label>
+          <input class="form-control" id="m_email" type="email" placeholder="email@company.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">전화번호</label>
+          <input class="form-control" id="m_phone" placeholder="+1 234 567 8900">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">웹사이트</label>
+        <input class="form-control" id="m_website" placeholder="https://www.company.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">메모</label>
+        <textarea class="form-control" id="m_note" rows="3" placeholder="탐색 경로, 특이사항 등"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('addManualModal')">취소</button>
+      <button class="btn btn-gold" onclick="addCompany()">거래처 DB에 추가</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js?v=2"></script>
+<script>
+// 국가 선택 채우기
+document.getElementById('country').innerHTML = '<option value="">전체 국가</option>' + countryOptions();
+document.getElementById('m_country').innerHTML = countryOptions('US');
+
+function doSearch() {
+  const kw = document.getElementById('keyword').value.trim();
+  const co = document.getElementById('country').value;
+  const ch = document.getElementById('channel').value;
+  if (!kw) { toast('키워드를 입력하세요', 'error'); return; }
+
+  const country = co ? getCountry(co).name : '';
+  const q = encodeURIComponent(kw + (country ? ' ' + country : '') + ' importer buyer distributor');
+
+  const urls = {
+    google: `https://www.google.com/search?q=${q}`,
+    linkedin: `https://www.linkedin.com/search/results/companies/?keywords=${encodeURIComponent(kw + ' ' + country)}`,
+    alibaba: `https://www.alibaba.com/trade/search?SearchText=${encodeURIComponent(kw)}`,
+    kompass: `https://kr.kompass.com/searchCompanies?keyword=${encodeURIComponent(kw)}`,
+    globalsources: `https://www.globalsources.com/searchproduct.htm?q=${encodeURIComponent(kw)}`,
+  };
+  window.open(urls[ch], '_blank');
+}
+
+function generateQueries() {
+  const kw = document.getElementById('keyword').value.trim();
+  const co = document.getElementById('country').value;
+  if (!kw) { toast('키워드를 입력하세요', 'error'); return; }
+  const country = co ? getCountry(co).name : '';
+
+  const queries = [
+    `${kw} importer ${country}`,
+    `${kw} buyer distributor ${country}`,
+    `${kw} manufacturer ${country}`,
+    `${kw} supplier wholesale ${country}`,
+    `"${kw}" company email ${country}`,
+    `${kw} B2B ${country} site:linkedin.com`,
+    `${kw} trade ${country} contact`,
+  ].filter(q => q.trim());
+
+  document.getElementById('queriesCard').style.display = '';
+  document.getElementById('queriesList').innerHTML = queries.map(q => {
+    const url = `https://www.google.com/search?q=${encodeURIComponent(q)}`;
+    return `<a href="${url}" target="_blank" class="btn btn-outline btn-sm" style="font-size:12px;">${q}</a>`;
+  }).join('');
+}
+
+function addCompany() {
+  const name = document.getElementById('m_name').value.trim();
+  const email = document.getElementById('m_email').value.trim();
+  const country = document.getElementById('m_country').value;
+  if (!name || !email) { toast('회사명과 이메일은 필수입니다', 'error'); return; }
+
+  const companies = DB.get('companies');
+  companies.push({
+    id: DB.id(),
+    name,
+    country,
+    industry: document.getElementById('m_industry').value.trim(),
+    contact: document.getElementById('m_contact').value.trim(),
+    email,
+    phone: document.getElementById('m_phone').value.trim(),
+    website: document.getElementById('m_website').value.trim(),
+    note: document.getElementById('m_note').value.trim(),
+    status: 'lead',
+    createdAt: Date.now()
+  });
+  DB.set('companies', companies);
+  toast(`${name} 거래처 DB에 추가됨`);
+  closeModal('addManualModal');
+  ['m_name','m_email','m_phone','m_website','m_industry','m_contact','m_note'].forEach(id => document.getElementById(id).value = '');
+  renderPreview();
+}
+
+function renderPreview() {
+  const companies = DB.get('companies').sort((a,b) => b.createdAt - a.createdAt).slice(0, 6);
+  document.getElementById('previewList').innerHTML = companies.length
+    ? `<table><thead><tr><th>회사명</th><th>국가</th><th>이메일</th><th>업종</th><th>상태</th></tr></thead><tbody>
+        ${companies.map(c => {
+          const ct = getCountry(c.country);
+          return `<tr>
+            <td style="font-weight:600;">${c.name}</td>
+            <td>${ct.flag} ${ct.name}</td>
+            <td style="font-size:12px;">${c.email}</td>
+            <td style="font-size:12px;">${c.industry || '-'}</td>
+            <td><span class="badge badge-${c.status}">${STATUS_LABELS[c.status]||c.status}</span></td>
+          </tr>`;
+        }).join('')}
+      </tbody></table>`
+    : `<div class="empty-state"><div class="icon">🏢</div><h3>등록된 거래처 없음</h3><p>직접 추가 버튼으로 거래처를 등록하세요</p></div>`;
+}
+
+renderPreview();
+</script>
+</body>
+</html>

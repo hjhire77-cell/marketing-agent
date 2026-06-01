@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>이메일 템플릿 | Global Sales Agent</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <h1>🌐 GLOBAL SALES</h1>
+    <p>해외영업 마케팅 에이전트</p>
+  </div>
+  <ul class="sidebar-menu">
+    <li class="sidebar-section">메인</li>
+    <li><a href="index.html"><span class="icon">📊</span> 대시보드</a></li>
+    <li class="sidebar-section">거래처 관리</li>
+    <li><a href="search.html"><span class="icon">🔍</span> 거래처 탐색</a></li>
+    <li><a href="companies.html"><span class="icon">🏢</span> 거래처 DB</a></li>
+    <li class="sidebar-section">이메일 영업</li>
+    <li><a href="templates.html"><span class="icon">📝</span> 이메일 템플릿</a></li>
+    <li><a href="campaigns.html"><span class="icon">🚀</span> 캠페인 발송</a></li>
+    <li><a href="history.html"><span class="icon">📬</span> 발송 이력</a></li>
+    <li class="sidebar-section">설정</li>
+    <li><a href="settings.html"><span class="icon">⚙️</span> Gmail 설정</a></li>
+  </ul>
+  <div class="sidebar-bottom">v1.0 · Global Sales Agent</div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-title">📝 이메일 템플릿</span>
+    <div class="topbar-right">
+      <button class="btn btn-gold btn-sm" onclick="openNewModal()">+ 새 템플릿</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- 변수 안내 -->
+    <div class="card" style="background:#f8f9fa;border:1.5px solid var(--border);padding:14px 18px;">
+      <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:8px;">📌 사용 가능한 변수 (자동 치환)</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        <code style="background:var(--navy);color:var(--gold);padding:3px 8px;border-radius:4px;font-size:12px;">{{company}}</code>
+        <code style="background:var(--navy);color:var(--gold);padding:3px 8px;border-radius:4px;font-size:12px;">{{contact}}</code>
+        <code style="background:var(--navy);color:var(--gold);padding:3px 8px;border-radius:4px;font-size:12px;">{{country}}</code>
+        <code style="background:var(--navy);color:var(--gold);padding:3px 8px;border-radius:4px;font-size:12px;">{{industry}}</code>
+        <code style="background:var(--navy);color:var(--gold);padding:3px 8px;border-radius:4px;font-size:12px;">{{sender}}</code>
+        <code style="background:var(--navy);color:var(--gold);padding:3px 8px;border-radius:4px;font-size:12px;">{{date}}</code>
+        <span style="font-size:12px;color:var(--text-muted);align-self:center;">→ 캠페인 발송 시 각 거래처 정보로 자동 교체</span>
+      </div>
+    </div>
+
+    <!-- 템플릿 목록 -->
+    <div id="templateList"></div>
+
+    <!-- 기본 템플릿 없을 때 -->
+    <div id="emptyState" style="display:none;">
+      <div class="empty-state"><div class="icon">📝</div><h3>템플릿 없음</h3><p>새 템플릿을 만들거나 기본 템플릿을 불러오세요</p>
+        <button class="btn btn-gold" style="margin-top:16px;" onclick="loadDefaults()">기본 템플릿 불러오기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 템플릿 편집 모달 -->
+<div class="modal-backdrop" id="templateModal">
+  <div class="modal" style="width:680px;">
+    <div class="modal-header">
+      <span class="modal-title" id="tModalTitle">📝 새 템플릿</span>
+      <button class="modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="t_id">
+      <div class="form-group">
+        <label class="form-label">템플릿 이름</label>
+        <input class="form-control" id="t_name" placeholder="예: 첫 컨택 영문 이메일">
+      </div>
+      <div class="form-group">
+        <label class="form-label">이메일 제목</label>
+        <input class="form-control" id="t_subject" placeholder="예: Partnership Inquiry - {{company}}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">본문</label>
+        <textarea class="form-control" id="t_body" rows="14" placeholder="이메일 본문을 입력하세요. {{company}}, {{contact}} 등 변수를 사용하세요."></textarea>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:6px;">
+        <button class="btn btn-outline btn-sm" onclick="previewTemplate()">👁️ 미리보기</button>
+        <button class="btn btn-outline btn-sm" onclick="insertVar('{{company}}')">+회사명</button>
+        <button class="btn btn-outline btn-sm" onclick="insertVar('{{contact}}')">+담당자</button>
+        <button class="btn btn-outline btn-sm" onclick="insertVar('{{country}}')">+국가</button>
+        <button class="btn btn-outline btn-sm" onclick="insertVar('{{sender}}')">+발신자</button>
+      </div>
+      <div id="previewBox" style="display:none;margin-top:14px;">
+        <div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:6px;">미리보기 (샘플 데이터)</div>
+        <div class="email-preview" id="previewContent"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('templateModal')">취소</button>
+      <button class="btn btn-gold" onclick="saveTemplate()">저장</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js?v=2"></script>
+<script>
+function renderTemplates() {
+  const templates = DB.get('templates');
+  const empty = document.getElementById('emptyState');
+  const list = document.getElementById('templateList');
+
+  if (!templates.length) {
+    empty.style.display = '';
+    list.innerHTML = '';
+    return;
+  }
+  empty.style.display = 'none';
+  list.innerHTML = templates.map(t => `
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-header">
+        <div>
+          <div class="card-title">${t.name}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:3px;">제목: ${t.subject}</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-outline btn-sm" onclick="editTemplate('${t.id}')">편집</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteTemplate('${t.id}')">삭제</button>
+        </div>
+      </div>
+      <div class="email-preview" style="max-height:120px;font-size:12px;">${t.body}</div>
+    </div>
+  `).join('');
+}
+
+function openNewModal() {
+  document.getElementById('tModalTitle').textContent = '📝 새 템플릿';
+  document.getElementById('t_id').value = '';
+  document.getElementById('t_name').value = '';
+  document.getElementById('t_subject').value = '';
+  document.getElementById('t_body').value = '';
+  document.getElementById('previewBox').style.display = 'none';
+  openModal('templateModal');
+}
+
+function editTemplate(id) {
+  const t = DB.get('templates').find(x => x.id === id);
+  if (!t) return;
+  document.getElementById('tModalTitle').textContent = '📝 템플릿 편집';
+  document.getElementById('t_id').value = id;
+  document.getElementById('t_name').value = t.name;
+  document.getElementById('t_subject').value = t.subject;
+  document.getElementById('t_body').value = t.body;
+  document.getElementById('previewBox').style.display = 'none';
+  openModal('templateModal');
+}
+
+function saveTemplate() {
+  const name = document.getElementById('t_name').value.trim();
+  const subject = document.getElementById('t_subject').value.trim();
+  const body = document.getElementById('t_body').value.trim();
+  if (!name || !subject || !body) { toast('모든 필드를 입력하세요', 'error'); return; }
+  const id = document.getElementById('t_id').value;
+  const templates = DB.get('templates');
+  if (id) {
+    const i = templates.findIndex(t => t.id === id);
+    templates[i] = { ...templates[i], name, subject, body };
+    toast('템플릿 수정됨');
+  } else {
+    templates.push({ id: DB.id(), name, subject, body, createdAt: Date.now() });
+    toast('템플릿 저장됨');
+  }
+  DB.set('templates', templates);
+  closeModal('templateModal');
+  renderTemplates();
+}
+
+function deleteTemplate(id) {
+  if (!confirm('이 템플릿을 삭제하시겠습니까?')) return;
+  DB.set('templates', DB.get('templates').filter(t => t.id !== id));
+  toast('삭제됨');
+  renderTemplates();
+}
+
+function insertVar(v) {
+  const ta = document.getElementById('t_body');
+  const pos = ta.selectionStart;
+  ta.value = ta.value.slice(0, pos) + v + ta.value.slice(ta.selectionEnd);
+  ta.focus();
+  ta.setSelectionRange(pos + v.length, pos + v.length);
+}
+
+function previewTemplate() {
+  const body = document.getElementById('t_body').value;
+  const cfg = DB.get('config', {});
+  const sample = {
+    '{{company}}': 'Sample Corp',
+    '{{contact}}': 'Mr. John',
+    '{{country}}': 'United States',
+    '{{industry}}': 'Chemical',
+    '{{sender}}': cfg.senderName || '발신자명',
+    '{{date}}': new Date().toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'}),
+  };
+  let preview = body;
+  Object.entries(sample).forEach(([k,v]) => preview = preview.replaceAll(k, v));
+  document.getElementById('previewContent').textContent = preview;
+  document.getElementById('previewBox').style.display = '';
+}
+
+function loadDefaults() {
+  const defaults = [
+    {
+      name: '첫 컨택 - 제품 소개 (영문)',
+      subject: 'Product Introduction & Partnership Inquiry - {{company}}',
+      body: `Dear {{contact}},
+
+I hope this message finds you well.
+
+My name is {{sender}}, and I am reaching out from a leading specialty chemical supplier based in South Korea. We specialize in high-performance silicone materials and cosmetic ingredients widely used in personal care, industrial coatings, and advanced materials.
+
+We believe our product portfolio may align well with the needs of {{company}}, and we would love to explore a potential business partnership.
+
+Could we schedule a brief call or exchange product information at your convenience?
+
+Best regards,
+{{sender}}
+Sales Manager | Global Business Division`
+    },
+    {
+      name: '팔로업 - 미회신 (영문)',
+      subject: 'Following Up - Partnership Opportunity with {{company}}',
+      body: `Dear {{contact}},
+
+I wanted to follow up on my previous email regarding our product offerings.
+
+We understand you may have a busy schedule, but I wanted to ensure our message reached the right person at {{company}}.
+
+Our specialty silicone and cosmetic ingredient solutions have been well-received by partners in {{country}} and across the region. We are confident we can offer competitive pricing and reliable supply.
+
+Please let me know if you would like to receive our product catalog or have a quick call.
+
+Thank you for your time.
+
+Best regards,
+{{sender}}`
+    },
+    {
+      name: '샘플 제안 (영문)',
+      subject: 'Free Sample Offer for {{company}} - {{industry}} Materials',
+      body: `Dear {{contact}},
+
+Thank you for your interest in our products.
+
+As a next step, we would like to offer complimentary samples of our key materials for your evaluation. This will allow your technical team to assess the quality and performance firsthand, with no obligation.
+
+Please share the following information so we can arrange the shipment:
+- Preferred products / specifications
+- Shipping address
+- Contact details for customs
+
+We look forward to building a long-term partnership with {{company}}.
+
+Warm regards,
+{{sender}}
+Global Sales | {{date}}`
+    },
+  ];
+  const templates = DB.get('templates');
+  defaults.forEach(d => templates.push({ id: DB.id(), ...d, createdAt: Date.now() }));
+  DB.set('templates', templates);
+  toast('기본 템플릿 3개 추가됨');
+  renderTemplates();
+}
+
+window.MA_RENDER = renderTemplates;
+renderTemplates();
+</script>
+</body>
+</html>
