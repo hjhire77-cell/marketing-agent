@@ -194,11 +194,11 @@ function renderTable() {
     const date = new Date(c.createdAt).toLocaleDateString('ko-KR');
     return `<tr>
       <td><input type="checkbox" class="row-check" data-id="${c.id}" onchange="updateBulkBar()"></td>
-      <td><strong>${c.name}</strong>${c.website ? `<br><a href="${c.website}" target="_blank" style="font-size:11px;color:var(--info);">${c.website}</a>` : ''}</td>
-      <td>${ct.flag} ${ct.name}</td>
-      <td style="font-size:12px;">${c.industry || '-'}</td>
-      <td style="font-size:12px;">${c.contact || '-'}</td>
-      <td style="font-size:12px;"><a href="mailto:${c.email}">${c.email}</a></td>
+      <td><strong>${esc(c.name)}</strong>${c.website ? `<br><a href="${esc(c.website)}" target="_blank" style="font-size:11px;color:var(--info);">${esc(c.website)}</a>` : ''}</td>
+      <td>${ct.flag} ${esc(ct.name)}</td>
+      <td style="font-size:12px;">${esc(c.industry) || '-'}</td>
+      <td style="font-size:12px;">${esc(c.contact) || '-'}</td>
+      <td style="font-size:12px;"><a href="mailto:${esc(c.email)}">${esc(c.email)}</a></td>
       <td>
         <select class="form-control" style="padding:3px 6px;font-size:11px;width:auto;" onchange="quickStatus('${c.id}', this.value)">
           ${['lead','contacted','replied','deal','rejected'].map(s =>

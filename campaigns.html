@@ -147,7 +147,7 @@ function loadTemplates() {
   const templates = DB.get('templates');
   const sel = document.getElementById('c_template');
   sel.innerHTML = '<option value="">-- 템플릿 선택 --</option>' +
-    templates.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+    templates.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('');
 }
 
 function onTemplateChange() {
@@ -180,12 +180,12 @@ function filterCompanies() {
   list.innerHTML = companies.map(c => {
     const ct = getCountry(c.country);
     return `<label style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid #f0f2f5;cursor:pointer;">
-      <input type="checkbox" class="company-check" data-id="${c.id}" data-name="${c.name}" data-email="${c.email}"
-        data-contact="${c.contact||'Sir/Madam'}" data-country="${ct.name}" data-industry="${c.industry||''}"
+      <input type="checkbox" class="company-check" data-id="${esc(c.id)}" data-name="${esc(c.name)}" data-email="${esc(c.email)}"
+        data-contact="${esc(c.contact||'Sir/Madam')}" data-country="${esc(ct.name)}" data-industry="${esc(c.industry||'')}"
         onchange="updateSelectedCount()">
       <div style="flex:1;">
-        <div style="font-size:13px;font-weight:600;">${c.name}</div>
-        <div style="font-size:11px;color:var(--text-muted);">${ct.flag} ${ct.name} · ${c.email}</div>
+        <div style="font-size:13px;font-weight:600;">${esc(c.name)}</div>
+        <div style="font-size:11px;color:var(--text-muted);">${ct.flag} ${esc(ct.name)} · ${esc(c.email)}</div>
       </div>
       <span class="badge badge-${c.status}" style="font-size:10px;">${STATUS_LABELS[c.status]||c.status}</span>
     </label>`;

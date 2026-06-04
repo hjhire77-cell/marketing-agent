@@ -179,6 +179,16 @@ function getCountry(code) {
   return COUNTRIES.find(c => c.code === code) || { code, name: code, flag: '🌐' };
 }
 
+// ── HTML 이스케이프 (innerHTML 삽입 시 깨짐/주입 방지) ──
+function esc(v) {
+  return String(v ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function countryOptions(selected = '') {
   return COUNTRIES.map(c =>
     `<option value="${c.code}" ${c.code === selected ? 'selected' : ''}>${c.flag} ${c.name}</option>`

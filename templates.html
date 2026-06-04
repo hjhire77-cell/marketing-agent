@@ -121,15 +121,15 @@ function renderTemplates() {
     <div class="card" style="margin-bottom:16px;">
       <div class="card-header">
         <div>
-          <div class="card-title">${t.name}</div>
-          <div style="font-size:12px;color:var(--text-muted);margin-top:3px;">제목: ${t.subject}</div>
+          <div class="card-title">${esc(t.name)}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:3px;">제목: ${esc(t.subject)}</div>
         </div>
         <div style="display:flex;gap:8px;">
           <button class="btn btn-outline btn-sm" onclick="editTemplate('${t.id}')">편집</button>
           <button class="btn btn-danger btn-sm" onclick="deleteTemplate('${t.id}')">삭제</button>
         </div>
       </div>
-      <div class="email-preview" style="max-height:120px;font-size:12px;">${t.body}</div>
+      <div class="email-preview" style="max-height:120px;font-size:12px;">${esc(t.body)}</div>
     </div>
   `).join('');
 }

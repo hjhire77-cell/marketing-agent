@@ -110,7 +110,7 @@ function loadCampaignFilter() {
   const campaigns = DB.get('campaigns');
   const sel = document.getElementById('filterCampaign');
   sel.innerHTML = '<option value="">전체 캠페인</option>' +
-    campaigns.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    campaigns.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
 }
 
 function renderCampaignSummary() {
@@ -124,7 +124,7 @@ function renderCampaignSummary() {
     ${[...campaigns].sort((a,b)=>b.createdAt-a.createdAt).map(c => {
       const rate = c.total ? Math.round(c.sent/c.total*100) : 0;
       return `<div style="border:1px solid var(--border);border-radius:8px;padding:14px;">
-        <div style="font-weight:700;font-size:13px;color:var(--navy);margin-bottom:6px;">${c.name}</div>
+        <div style="font-weight:700;font-size:13px;color:var(--navy);margin-bottom:6px;">${esc(c.name)}</div>
         <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">${new Date(c.createdAt).toLocaleDateString('ko-KR')}</div>
         <div style="display:flex;gap:10px;font-size:13px;margin-bottom:8px;">
           <span>전체 <strong>${c.total}</strong></span>
@@ -156,10 +156,10 @@ function renderTable() {
     const dt = new Date(h.sentAt).toLocaleString('ko-KR');
     return `<tr>
       <td style="font-size:12px;color:var(--text-muted);white-space:nowrap;">${dt}</td>
-      <td style="font-size:12px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${h.campaignName||'-'}</td>
-      <td style="font-size:12px;font-weight:600;">${h.toName||'-'}</td>
-      <td style="font-size:12px;"><a href="mailto:${h.toEmail}" style="color:var(--info);">${h.toEmail}</a></td>
-      <td style="font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${h.subject}">${h.subject}</td>
+      <td style="font-size:12px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(h.campaignName)||'-'}</td>
+      <td style="font-size:12px;font-weight:600;">${esc(h.toName)||'-'}</td>
+      <td style="font-size:12px;"><a href="mailto:${esc(h.toEmail)}" style="color:var(--info);">${esc(h.toEmail)}</a></td>
+      <td style="font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(h.subject)}">${esc(h.subject)}</td>
       <td><span class="badge badge-${h.status}">${h.status==='sent'?'발송 완료':'실패'}</span></td>
       <td><button class="btn btn-outline btn-xs" onclick="viewEmail('${h.id}')">보기</button></td>
     </tr>`;

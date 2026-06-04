@@ -138,8 +138,8 @@ function renderDashboard() {
         ${recent.map(c => {
           const ct = getCountry(c.country);
           return `<tr>
-            <td><a href="companies.html" style="color:var(--navy);font-weight:600;">${c.name}</a></td>
-            <td>${ct.flag} ${ct.name}</td>
+            <td><a href="companies.html" style="color:var(--navy);font-weight:600;">${esc(c.name)}</a></td>
+            <td>${ct.flag} ${esc(ct.name)}</td>
             <td><span class="badge badge-${c.status}">${STATUS_LABELS[c.status] || c.status}</span></td>
           </tr>`;
         }).join('')}
@@ -151,8 +151,8 @@ function renderDashboard() {
   document.getElementById('recentHistory').innerHTML = recentH.length
     ? `<table><thead><tr><th>수신자</th><th>제목</th><th>상태</th></tr></thead><tbody>
         ${recentH.map(h => `<tr>
-          <td style="font-size:12px;">${h.toEmail}</td>
-          <td style="font-size:12px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${h.subject}</td>
+          <td style="font-size:12px;">${esc(h.toEmail)}</td>
+          <td style="font-size:12px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(h.subject)}</td>
           <td><span class="badge badge-${h.status}">${h.status === 'sent' ? '발송 완료' : '실패'}</span></td>
         </tr>`).join('')}
       </tbody></table>`

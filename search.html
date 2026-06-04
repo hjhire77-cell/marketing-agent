@@ -236,10 +236,10 @@ function renderPreview() {
         ${companies.map(c => {
           const ct = getCountry(c.country);
           return `<tr>
-            <td style="font-weight:600;">${c.name}</td>
-            <td>${ct.flag} ${ct.name}</td>
-            <td style="font-size:12px;">${c.email}</td>
-            <td style="font-size:12px;">${c.industry || '-'}</td>
+            <td style="font-weight:600;">${esc(c.name)}</td>
+            <td>${ct.flag} ${esc(ct.name)}</td>
+            <td style="font-size:12px;">${esc(c.email)}</td>
+            <td style="font-size:12px;">${esc(c.industry) || '-'}</td>
             <td><span class="badge badge-${c.status}">${STATUS_LABELS[c.status]||c.status}</span></td>
           </tr>`;
         }).join('')}
@@ -247,6 +247,7 @@ function renderPreview() {
     : `<div class="empty-state"><div class="icon">🏢</div><h3>등록된 거래처 없음</h3><p>직접 추가 버튼으로 거래처를 등록하세요</p></div>`;
 }
 
+window.MA_RENDER = renderPreview;
 renderPreview();
 </script>
 </body>
